@@ -13,6 +13,15 @@ return new class extends Migration
     {
         Schema::create('challenges', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('curator_id')->constrained('users')->onDelete('cascade');
+            $table->string('title');
+            $table->text('description');
+            $table->text('rules');
+            $table->string('prize');
+            $table->string('banner_path');
+            $table->dateTime('start_date');
+            $table->dateTime('end_date');
+            $table->enum('status', ['open', 'closed'])->default('open');
             $table->timestamps();
         });
     }

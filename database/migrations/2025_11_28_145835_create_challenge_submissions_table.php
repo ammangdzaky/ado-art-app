@@ -13,6 +13,10 @@ return new class extends Migration
     {
         Schema::create('challenge_submissions', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('challenge_id')->constrained()->onDelete('cascade');
+            $table->foreignId('artwork_id')->constrained()->onDelete('cascade');
+            $table->timestamp('submitted_at')->useCurrent();
+            $table->enum('rank', ['1', '2', '3'])->nullable();
             $table->timestamps();
         });
     }
