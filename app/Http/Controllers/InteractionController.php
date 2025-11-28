@@ -52,4 +52,25 @@ class InteractionController extends Controller
 
         return back();
     }
+    public function report(Request $request, Artwork $artwork)
+    {
+        $request->validate(['reason' => 'required|string|max:255']);
+
+        \App\Models\Report::create([
+            'reporter_id' => Auth::id(),
+            'artwork_id' => $artwork->id,
+            'reason' => $request->reason,
+            'status' => 'pending',
+        ]);
+
+        return back()->with('success', 'Report submitted to moderators.');
+    }
+    public function toggleFavorite(Artwork $artwork)
+    {
+        $artwork->favorites()->where('user_id', Auth::id())->exists()
+            ? $artwork->favorites()->where('user_id', Auth::id())->delete()
+            : $artwork->favorites()->create(['user_id' => Auth::id()]);
+
+        return back();
+    }
 }

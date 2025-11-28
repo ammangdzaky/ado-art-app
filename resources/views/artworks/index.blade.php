@@ -26,6 +26,32 @@
                 </form>
             </div>
 
+            @if(request()->routeIs('home'))
+            <div class="relative bg-gray-900 overflow-hidden mb-12">
+                <div class="absolute inset-0">
+                    <img src="https://images.unsplash.com/photo-1547891654-e66ed7ebb968?ixlib=rb-1.2.1&auto=format&fit=crop&w=1920&q=80" class="w-full h-full object-cover opacity-30">
+                </div>
+                <div class="relative max-w-7xl mx-auto py-24 px-4 sm:px-6 lg:px-8 text-center">
+                    <h1 class="text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
+                        Discover the Extraordinary.
+                    </h1>
+                    <p class="mt-6 text-xl text-gray-300 max-w-3xl mx-auto">
+                        AdoArt is the premier showcase for digital artists. Join challenges, build your portfolio, and find inspiration.
+                    </p>
+                    @guest
+                    <div class="mt-10 flex justify-center gap-4">
+                        <a href="{{ route('register') }}" class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-gray-900 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10">
+                            Get Started
+                        </a>
+                        <a href="{{ route('challenges.browse') }}" class="px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 md:py-4 md:text-lg md:px-10">
+                            View Challenges
+                        </a>
+                    </div>
+                    @endguest
+                </div>
+            </div>
+            @endif
+
             <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                 @forelse($artworks as $artwork)
                 <div class="group relative bg-white dark:bg-gray-800 rounded-xl overflow-hidden shadow-lg transition-transform duration-300 hover:-translate-y-1 hover:shadow-2xl">

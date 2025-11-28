@@ -14,14 +14,24 @@ class ArtworkController extends Controller
     {
         $query = Artwork::with('user', 'category')->latest();
 
+        // Filter Kategori
         if ($request->has('category')) {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        if ($request->has('search')) {
-            $query->where('title', 'like', '%' . $request->search . '%');
+        // Search Logic: Judul OR Deskripsi OR Tags OR Nama User
+        if ($request->has('search') && $request->search != '') {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('title', 'like', '%' . $search . '%')
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhere('tags', 'like', '%' . $search . '%')
+                  ->orWhereHas('user', function($u) use ($search) {
+                      $u->where('name', 'like', '%' . $search . '%');
+                  });
+            });
         }
 
         $artworks = $query->paginate(12);
@@ -113,5 +123,11 @@ class ArtworkController extends Controller
         $artwork->delete();
 
         return redirect()->route('dashboard')->with('success', 'Artwork deleted.');
+    }
+
+    public function myFavorites()
+    {
+        $favorites = Auth::user()->favorites()->with('artwork.user')->latest()->paginate(12);
+        return view('artworks.favorites', compact('favorites'));
     }
 }

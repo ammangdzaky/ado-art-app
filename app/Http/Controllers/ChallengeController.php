@@ -169,4 +169,23 @@ class ChallengeController extends Controller
 
         return back()->with('success', 'Winners announced successfully!');
     }
+
+    public function mySubmissions()
+    {
+        $submissions = \App\Models\ChallengeSubmission::with('challenge', 'artwork')
+            ->whereHas('artwork', function($q) {
+                $q->where('user_id', Auth::id());
+            })->latest()->get();
+
+        return view('challenges.my-submissions', compact('submissions'));
+    }
+    public function browse()
+    {
+        // Tampilkan challenge yang Open paling atas, lalu urutkan berdasarkan deadline
+        $challenges = Challenge::orderByRaw("FIELD(status, 'open', 'closed')")
+            ->orderBy('end_date', 'desc')
+            ->paginate(9);
+            
+        return view('challenges.index', compact('challenges'));
+    }
 }
