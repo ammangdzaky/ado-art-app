@@ -9,8 +9,9 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     return view('welcome');
   });
-  Route::get('/gallery', [App\Http\Controllers\ArtworkController::class, 'index'])->name('artworks.index');
+Route::get('/gallery', [App\Http\Controllers\ArtworkController::class, 'index'])->name('artworks.index');
 Route::get('/artwork/{artwork}', [App\Http\Controllers\ArtworkController::class, 'show'])->name('artworks.show');
+Route::get('/challenges/{challenge}', [App\Http\Controllers\ChallengeController::class, 'show'])->name('challenges.show');
 
 Route::get('/pending-approval', function () {
     return view('auth.pending');
@@ -32,6 +33,16 @@ Route::get('/dashboard', function () {
 
 Route::middleware(['auth', 'status', 'role:curator'])->group(function () {
     Route::get('/curator/dashboard', [CuratorController::class, 'index'])->name('curator.dashboard');
+    Route::resource('curator/challenges', App\Http\Controllers\ChallengeController::class)->names([
+        'index' => 'curator.challenges.index',
+        'create' => 'curator.challenges.create',
+        'store' => 'curator.challenges.store',
+        'edit' => 'curator.challenges.edit',
+        'update' => 'curator.challenges.update',
+        'destroy' => 'curator.challenges.destroy',
+    ])->except(['show']);
+
+    Route::post('/curator/challenges/{challenge}/winners', [App\Http\Controllers\ChallengeController::class, 'selectWinners'])->name('curator.challenges.winners');
 });
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
@@ -44,6 +55,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('artworks', App\Http\Controllers\ArtworkController::class)->except(['index', 'show']);
+    Route::post('/challenges/{challenge}/submit', [App\Http\Controllers\ChallengeController::class, 'submit'])->name('challenges.submit');
 });
 
 require __DIR__.'/auth.php';
