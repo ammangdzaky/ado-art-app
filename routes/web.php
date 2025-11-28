@@ -12,6 +12,7 @@ Route::get('/', function () {
 Route::get('/gallery', [App\Http\Controllers\ArtworkController::class, 'index'])->name('artworks.index');
 Route::get('/artwork/{artwork}', [App\Http\Controllers\ArtworkController::class, 'show'])->name('artworks.show');
 Route::get('/challenges/{challenge}', [App\Http\Controllers\ChallengeController::class, 'show'])->name('challenges.show');
+Route::get('/artist/{user}', [App\Http\Controllers\PublicProfileController::class, 'show'])->name('artist.show');
 
 Route::get('/pending-approval', function () {
     return view('auth.pending');
@@ -56,6 +57,10 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
     Route::resource('artworks', App\Http\Controllers\ArtworkController::class)->except(['index', 'show']);
     Route::post('/challenges/{challenge}/submit', [App\Http\Controllers\ChallengeController::class, 'submit'])->name('challenges.submit');
+    Route::post('/artwork/{artwork}/like', [App\Http\Controllers\InteractionController::class, 'toggleLike'])->name('artwork.like');
+    Route::post('/artwork/{artwork}/comment', [App\Http\Controllers\InteractionController::class, 'storeComment'])->name('artwork.comment');
+    Route::delete('/comment/{comment}', [App\Http\Controllers\InteractionController::class, 'destroyComment'])->name('comment.destroy');
+    Route::post('/user/{user}/follow', [App\Http\Controllers\InteractionController::class, 'toggleFollow'])->name('user.follow');
 });
 
 require __DIR__.'/auth.php';
