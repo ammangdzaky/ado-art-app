@@ -34,6 +34,7 @@ Route::middleware(['auth', 'status', 'role:curator'])->group(function () {
 
 Route::middleware(['auth', 'role:admin'])->group(function () {
     Route::get('/admin/dashboard', [AdminController::class, 'index'])->name('admin.dashboard');
+    Route::resource('categories', \App\Http\Controllers\CategoryController::class);
 });
 
 Route::middleware('auth')->group(function () {
