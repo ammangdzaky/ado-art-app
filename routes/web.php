@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('welcome');
-    Route::get('/gallery', [App\Http\Controllers\ArtworkController::class, 'index'])->name('artworks.index');
-    Route::get('/artwork/{artwork}', [App\Http\Controllers\ArtworkController::class, 'show'])->name('artworks.show');
-});
+  });
+  Route::get('/gallery', [App\Http\Controllers\ArtworkController::class, 'index'])->name('artworks.index');
+Route::get('/artwork/{artwork}', [App\Http\Controllers\ArtworkController::class, 'show'])->name('artworks.show');
 
 Route::get('/pending-approval', function () {
     return view('auth.pending');
