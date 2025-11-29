@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Artwork;
 use App\Models\Category;
+use App\Models\Challenge;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,31 +13,45 @@ class ArtworkController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Artwork::with('user', 'category')->latest();
+        // Query Dasar
+        $query = Artwork::with('user', 'category');
 
-        // Filter Kategori
-        if ($request->has('category')) {
+        // 1. Filter Kategori
+        if ($request->has('category') && $request->category != 'all') {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        // Search Logic: Judul OR Deskripsi OR Tags OR Nama User
+        // 2. Search Logic
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('description', 'like', '%' . $search . '%')
-                  ->orWhere('tags', 'like', '%' . $search . '%')
-                  ->orWhereHas('user', function($u) use ($search) {
-                      $u->where('name', 'like', '%' . $search . '%');
-                  });
+                  ->orWhere('tags', 'like', '%' . $search . '%');
             });
+        }
+
+        // 3. Sorting Logic (BARU)
+        if ($request->sort === 'trending') {
+            $query->withCount('likes')->orderByDesc('likes_count');
+        } else {
+            // Default: Latest
+            $query->latest();
         }
 
         $artworks = $query->paginate(12);
         
-        return view('artworks.index', compact('artworks'));
+        // Data Pendukung View
+        $activeChallenges = \App\Models\Challenge::where('status', 'open')
+            ->where('end_date', '>', now())
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $categories = \App\Models\Category::all();
+
+        return view('artworks.index', compact('artworks', 'activeChallenges', 'categories'));
     }
 
     public function create()
