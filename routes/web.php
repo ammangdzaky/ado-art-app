@@ -20,16 +20,20 @@ Route::get('/pending-approval', function () {
 
 Route::get('/dashboard', function () {
     $user = Auth::user();
-    
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    } 
-    
-    if ($user->role === 'curator') {
-        return redirect()->route('curator.dashboard');
-    }
 
-    return view('dashboard'); 
+    if ($user->role === 'admin') return redirect()->route('admin.dashboard');
+    if ($user->role === 'curator') return redirect()->route('curator.dashboard');
+
+    $artworks = $user->artworks()->withCount('likes')->latest()->get();
+    
+    $collections = $user->collections()->withCount('artworks')->latest()->get();
+    
+    $submissions = \App\Models\ChallengeSubmission::with(['challenge', 'artwork'])
+                    ->whereHas('artwork', fn($q) => $q->where('user_id', $user->id))
+                    ->latest()
+                    ->get();
+
+    return view('dashboard', compact('artworks', 'collections', 'submissions'));
 })->middleware(['auth', 'verified', 'status'])->name('dashboard');
 
 Route::middleware(['auth', 'status', 'role:curator'])->group(function () {

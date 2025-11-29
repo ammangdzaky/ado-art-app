@@ -13,8 +13,7 @@ class ArtworkController extends Controller
 {
     public function index(Request $request)
     {
-        // Query Dasar
-        $query = Artwork::with('user', 'category');
+        $query = \App\Models\Artwork::with('user', 'category');
 
         // 1. Filter Kategori
         if ($request->has('category') && $request->category != 'all') {
@@ -23,26 +22,29 @@ class ArtworkController extends Controller
             });
         }
 
-        // 2. Search Logic
-        if ($request->has('search') && $request->search != '') {
+        // 2. Search Logic (PERBAIKAN: Grouping Query)
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
-                  ->orWhere('tags', 'like', '%' . $search . '%');
+                  ->orWhere('description', 'like', '%' . $search . '%')
+                  ->orWhere('tags', 'like', '%' . $search . '%')
+                  // Cari berdasarkan Nama User (Relasi)
+                  ->orWhereHas('user', function($u) use ($search) {
+                      $u->where('name', 'like', '%' . $search . '%');
+                  });
             });
         }
 
-        // 3. Sorting Logic (BARU)
+        // 3. Sorting
         if ($request->sort === 'trending') {
             $query->withCount('likes')->orderByDesc('likes_count');
         } else {
-            // Default: Latest
             $query->latest();
         }
 
         $artworks = $query->paginate(12);
         
-        // Data Pendukung View
         $activeChallenges = \App\Models\Challenge::where('status', 'open')
             ->where('end_date', '>', now())
             ->latest()
@@ -86,17 +88,11 @@ class ArtworkController extends Controller
 
     public function show(Artwork $artwork)
     {
-        return view('artworks.show', compact('artwork'));
-    }
-
-    public function edit(Artwork $artwork)
-    {
-        if (Auth::id() !== $artwork->user_id) {
-            abort(403);
-        }
+        $previousArtwork = Artwork::where('id', '<', $artwork->id)->orderBy('id', 'desc')->first();
         
-        $categories = Category::all();
-        return view('artworks.edit', compact('artwork', 'categories'));
+        $nextArtwork = Artwork::where('id', '>', $artwork->id)->orderBy('id', 'asc')->first();
+
+        return view('artworks.show', compact('artwork', 'previousArtwork', 'nextArtwork'));
     }
 
     public function update(Request $request, Artwork $artwork)

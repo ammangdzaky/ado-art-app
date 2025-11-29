@@ -44,10 +44,6 @@ class Artwork extends Model
                     ->withPivot('rank', 'submitted_at')
                     ->withTimestamps();
     }
-    public function favorites()
-    {
-        return $this->hasMany(Favorite::class);
-    }
     public function collections() {
         return $this->belongsToMany(Collection::class, 'artwork_collection');
     }

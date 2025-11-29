@@ -27,66 +27,59 @@
     </div>
     @endif
 
-    {{-- 2. CATEGORIES (STICKY HEADER) --}}
-    <div class="sticky top-0 z-30 bg-white/95 dark:bg-gray-900/95 backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm" x-data="{ categoryMenuOpen: false }">
+    {{-- BAGIAN 2: CATEGORIES BAR (REVISI WARNA DARK MODE) --}}
+    <div id="gallery-section" class="scroll-mt-24 sticky top-0 z-30 bg-white dark:bg-[#121212] backdrop-blur-md border-b border-gray-200 dark:border-gray-800 shadow-sm" x-data="{ categoryMenuOpen: false }">
         <div class="max-w-[1920px] mx-auto px-4 sm:px-6">
             <div class="flex items-center justify-between h-16 gap-4">
                 
                 {{-- A. MOBILE ONLY: Tombol Titik Tiga (...) --}}
                 <div class="md:hidden flex items-center">
                     <button @click="categoryMenuOpen = !categoryMenuOpen" 
-                            class="p-2 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                        {{-- Icon Titik Tiga --}}
+                            class="p-2 rounded-lg text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] hover:text-indigo-500 transition border border-gray-200 dark:border-gray-700 bg-transparent">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M5 12h.01M12 12h.01M19 12h.01M6 12a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0zm7 0a1 1 0 11-2 0 1 1 0 012 0z" />
                         </svg>
                     </button>
                     
-                    {{-- Label Kategori Aktif (Supaya user tau sedang di kategori apa) --}}
-                    <span class="ml-3 font-bold text-gray-900 dark:text-white text-sm">
+                    <span class="ml-3 font-bold text-gray-900 dark:text-white text-sm tracking-wide">
                         {{ request('category') ? ucwords(str_replace('-', ' ', request('category'))) : 'Explore' }}
                     </span>
                 </div>
 
                 {{-- B. DESKTOP ONLY: Horizontal Scroll (Pills) --}}
                 <div class="hidden md:flex flex-1 overflow-x-auto hide-scroll items-center space-x-2 py-2">
-                    <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" 
-                       class="px-4 py-1.5 rounded-full text-sm font-bold transition whitespace-nowrap {{ !request('category') ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-100 dark:bg-gray-800' }}">
+                    {{-- Tombol "All Art" (+ #gallery-section) --}}
+                    <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}#gallery-section" 
+                       class="px-5 py-1.5 rounded-full text-sm font-bold transition whitespace-nowrap {{ !request('category') ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a]' }}">
                        All Art
                     </a>
 
                     @foreach($categories as $cat)
-                    <a href="{{ request()->fullUrlWithQuery(['category' => $cat->slug]) }}" 
-                       class="px-4 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap {{ request('category') == $cat->slug ? 'bg-gray-900 text-white dark:bg-white dark:text-black' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white bg-gray-100 dark:bg-gray-800' }}">
+                    {{-- Tombol Kategori (+ #gallery-section) --}}
+                    <a href="{{ request()->fullUrlWithQuery(['category' => $cat->slug]) }}#gallery-section" 
+                       class="px-5 py-1.5 rounded-full text-sm font-medium transition whitespace-nowrap {{ request('category') == $cat->slug ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/30' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-[#1a1a1a]' }}">
                        {{ $cat->name }}
                     </a>
                     @endforeach
                 </div>
 
                 {{-- C. KANAN: Filter & Sort --}}
-                <div class="flex-shrink-0 flex items-center border-l border-gray-200 dark:border-gray-700 pl-4">
+                <div class="flex-shrink-0 flex items-center border-l border-gray-200 dark:border-gray-800 pl-4">
                     
-                    {{-- Desktop Filter --}}
-                    {{-- <button class="hidden md:flex items-center gap-2 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white text-sm font-medium transition">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
-                        </svg>
-                        <span>Filters</span>
-                    </button> --}}
 
-                    {{-- MOBILE ONLY: Dropdown Sort (Latest/Trending) --}}
-                    {{-- Kita simpan ini agar user tetap bisa sort di mobile --}}
+                    {{-- MOBILE ONLY: Dropdown Sort --}}
                     <div class="md:hidden relative" x-data="{ sortOpen: false }">
-                        <button @click="sortOpen = !sortOpen" class="flex items-center gap-1 text-gray-900 dark:text-white font-bold text-sm bg-gray-100 dark:bg-gray-800 px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700">
+                        <button @click="sortOpen = !sortOpen" class="flex items-center gap-1 text-gray-900 dark:text-white font-bold text-sm bg-gray-100 dark:bg-[#1a1a1a] px-3 py-2 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-indigo-500 transition">
                             <span>{{ request('sort') == 'trending' ? 'Trending' : 'Latest' }}</span>
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                             </svg>
                         </button>
 
-                        <div x-show="sortOpen" @click.outside="sortOpen = false" class="absolute right-0 mt-2 w-40 bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-100 dark:border-gray-700 py-1 z-50 origin-top-right" style="display: none;">
-                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'latest']) }}" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 {{ !request('sort') || request('sort') == 'latest' ? 'font-bold text-indigo-600' : 'text-gray-700 dark:text-gray-300' }}">Latest</a>
-                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'trending']) }}" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 {{ request('sort') == 'trending' ? 'font-bold text-indigo-600' : 'text-gray-700 dark:text-gray-300' }}">Trending</a>
+                        <div x-show="sortOpen" @click.outside="sortOpen = false" class="absolute right-0 mt-2 w-40 bg-white dark:bg-[#1a1a1a] rounded-xl shadow-2xl border border-gray-100 dark:border-gray-800 py-1 z-50 origin-top-right" style="display: none;">
+                            {{-- Link Mobile Sort (+ #gallery-section) --}}
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'latest']) }}#gallery-section" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-[#252525] {{ !request('sort') || request('sort') == 'latest' ? 'font-bold text-indigo-500' : 'text-gray-700 dark:text-gray-300' }}">Latest</a>
+                            <a href="{{ request()->fullUrlWithQuery(['sort' => 'trending']) }}#gallery-section" class="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-[#252525] {{ request('sort') == 'trending' ? 'font-bold text-indigo-500' : 'text-gray-700 dark:text-gray-300' }}">Trending</a>
                         </div>
                     </div>
 
@@ -94,7 +87,7 @@
             </div>
         </div>
 
-        {{-- D. MOBILE CATEGORY DRAWER (Isi dari tombol Titik Tiga) --}}
+        {{-- D. MOBILE CATEGORY DRAWER --}}
         <div x-show="categoryMenuOpen" 
              x-transition:enter="transition ease-out duration-200"
              x-transition:enter-start="opacity-0 -translate-y-2"
@@ -103,17 +96,16 @@
              x-transition:leave-start="opacity-100 translate-y-0"
              x-transition:leave-end="opacity-0 -translate-y-2"
              @click.outside="categoryMenuOpen = false"
-             class="absolute top-16 left-0 w-full bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 shadow-2xl z-40 md:hidden max-h-[80vh] overflow-y-auto">
+             class="absolute top-16 left-0 w-full bg-white dark:bg-[#121212] border-b border-gray-200 dark:border-gray-800 shadow-2xl z-40 md:hidden max-h-[80vh] overflow-y-auto">
             
             <div class="p-4 grid grid-cols-1 gap-1">
                 <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2 px-3">All Channels</p>
                 
-                {{-- Tombol All Art --}}
-                <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}" 
-                   class="flex items-center justify-between px-3 py-3 rounded-lg {{ !request('category') ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-bold' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                {{-- Tombol All Art Mobile (+ #gallery-section) --}}
+                <a href="{{ request()->fullUrlWithQuery(['category' => null]) }}#gallery-section" 
+                   class="flex items-center justify-between px-3 py-3 rounded-lg transition {{ !request('category') ? 'bg-indigo-600 text-white font-bold shadow-lg' : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#1a1a1a]' }}">
                    <div class="flex items-center gap-3">
-                       {{-- Icon Globe/Explore --}}
-                       <div class="w-8 h-8 rounded bg-indigo-500 flex items-center justify-center text-white">
+                       <div class="w-8 h-8 rounded bg-white/20 flex items-center justify-center text-current">
                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                        </div>
                        <span>Explore All</span>
@@ -121,16 +113,14 @@
                    @if(!request('category')) <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg> @endif
                 </a>
 
-                {{-- List Kategori --}}
+                {{-- List Kategori Mobile (+ #gallery-section) --}}
                 @foreach($categories as $cat)
-                <a href="{{ request()->fullUrlWithQuery(['category' => $cat->slug]) }}" 
-                   class="flex items-center justify-between px-3 py-3 rounded-lg group {{ request('category') == $cat->slug ? 'bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-white font-bold' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800' }}">
+                <a href="{{ request()->fullUrlWithQuery(['category' => $cat->slug]) }}#gallery-section" 
+                   class="flex items-center justify-between px-3 py-3 rounded-lg group transition {{ request('category') == $cat->slug ? 'bg-indigo-600 text-white font-bold shadow-lg' : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-[#1a1a1a] dark:hover:text-white' }}">
                    
                    <div class="flex items-center gap-3">
-                       {{-- Kotak Gambar Dummy (Biar mirip ArtStation) --}}
-                       <div class="w-8 h-8 rounded bg-gray-200 dark:bg-gray-700 overflow-hidden relative">
-                           {{-- Karena kita tidak punya icon kategori, kita pakai inisial --}}
-                           <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400">
+                       <div class="w-8 h-8 rounded bg-gray-200 dark:bg-[#252525] overflow-hidden relative">
+                           <div class="absolute inset-0 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-gray-400 group-hover:text-white transition">
                                {{ substr($cat->name, 0, 1) }}
                            </div>
                        </div>
@@ -138,7 +128,7 @@
                    </div>
 
                    @if(request('category') == $cat->slug) 
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg> 
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" /></svg> 
                    @endif
                 </a>
                 @endforeach
@@ -210,17 +200,16 @@
     {{-- 4. FLOATING FILTER BAR (NEW FEATURE) --}}
     <div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-40 bg-gray-900/90 backdrop-blur-xl border border-gray-700 rounded-full shadow-2xl p-1.5 hidden md:flex items-center gap-2 transition-all duration-300 hover:scale-105">
         
-        <a href="{{ request()->fullUrlWithQuery(['sort' => 'latest']) }}" 
+        {{-- Link Desktop (+ #gallery-section) --}}
+        <a href="{{ request()->fullUrlWithQuery(['sort' => 'latest']) }}#gallery-section" 
            class="px-6 py-2.5 rounded-full text-sm font-bold transition {{ !request('sort') || request('sort') == 'latest' ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
            Latest
         </a>
         
-
-        <a href="{{ request()->fullUrlWithQuery(['sort' => 'trending']) }}" 
+        <a href="{{ request()->fullUrlWithQuery(['sort' => 'trending']) }}#gallery-section" 
            class="px-6 py-2.5 rounded-full text-sm font-bold transition {{ request('sort') == 'trending' ? 'bg-white text-black shadow-lg scale-105' : 'text-gray-400 hover:text-white hover:bg-white/10' }}">
            Trending
         </a>
-
 
     </div>
 

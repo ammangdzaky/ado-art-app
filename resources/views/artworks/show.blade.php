@@ -1,197 +1,360 @@
 <x-app-layout>
-    {{-- LOGIKA: Cek User --}}
+    {{-- LOGIKA DATA --}}
     @php
         $user = Auth::user();
         $isLiked = false;
         $isFavorited = false;
+        $isFollowing = false;
         
         if ($user) {
             $isLiked = $artwork->likes()->where('user_id', $user->id)->exists();
-            $isFavorited = $artwork->favorites()->where('user_id', $user->id)->exists();
+            $isFavorited = $artwork->collections()->where('user_id', $user->id)->exists(); // Pastikan pakai collections()
+            if ($user->id !== $artwork->user_id) {
+                $isFollowing = $user->following()->where('followed_id', $artwork->user_id)->exists();
+            }
         }
+
+        $moreArtworks = $artwork->user->artworks()
+                        ->where('id', '!=', $artwork->id)
+                        ->latest()
+                        ->take(6)
+                        ->get();
     @endphp
 
-    <div class="py-12">
-        <div class="max-w-6xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-xl sm:rounded-2xl border border-gray-100 dark:border-gray-700">
+    <div class="bg-[#0b0b0b] min-h-screen text-gray-300 pb-20 pt-6">
+        <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col lg:flex-row gap-8">
                 
-                {{-- GAMBAR --}}
-                <div class="w-full bg-gray-100 dark:bg-gray-900 flex justify-center items-center p-2 min-h-[400px]">
-                    <img src="{{ asset('storage/' . $artwork->image_path) }}" alt="{{ $artwork->title }}" class="max-h-[85vh] w-auto object-contain rounded shadow-lg">
-                </div>
+                {{-- === KOLOM KIRI (75%) === --}}
+                <div class="flex-1 min-w-0">
+                    
+                    {{-- 1. IMAGE VIEWER (AMBIENT) --}}
+                    <div class="relative w-full rounded-2xl overflow-hidden mb-8 border border-gray-800/50 shadow-2xl bg-[#121212] group min-h-auto lg:min-h-[600px] flex justify-center items-center">
+                        <div class="absolute inset-0 z-0 overflow-hidden">
+                            <img src="{{ asset('storage/' . $artwork->image_path) }}" class="w-full h-full object-cover blur-[20px] scale-125 ">
+                        </div>
+                        <div class="relative z-10 w-full flex justify-center p-0 lg:p-8">
+                            <img src="{{ asset('storage/' . $artwork->image_path) }}" alt="{{ $artwork->title }}" class="w-auto h-auto max-w-full max-h-[85vh] object-contain shadow-2xl rounded-lg lg:rounded-none">
+                        </div>
+                    </div>
 
-                <div class="p-6 md:p-10">
-                    {{-- HEADER --}}
-                    <div class="flex flex-col md:flex-row justify-between items-start gap-4 mb-8">
-                        {{-- Judul & Info --}}
-                        <div>
-                            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-900 dark:text-white mb-2">{{ $artwork->title }}</h1>
-                            <div class="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400">
-                                <a href="{{ route('artist.show', $artwork->user) }}" class="flex items-center gap-2 group hover:text-indigo-600">
-                                    <span class="font-bold">{{ $artwork->user->name }}</span>
-                                </a>
-                                <span>•</span>
-                                <span>{{ $artwork->created_at->format('d M Y') }}</span>
-                                <span>•</span>
-                                <span class="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-xs font-semibold">{{ $artwork->category->name }}</span>
+                    {{-- === MOBILE ONLY: FULL INFO PANEL (Fixed) === --}}
+                    <div class="block lg:hidden mb-8 space-y-6 bg-[#121212] p-5 rounded-xl border border-gray-800">
+                        
+                        {{-- A. Artist Info --}}
+                        <div class="flex items-center justify-between">
+                            <a href="{{ route('artist.show', $artwork->user) }}" class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full overflow-hidden border border-gray-600">
+                                    @if($artwork->user->avatar)
+                                        <img src="{{ asset('storage/' . $artwork->user->avatar) }}" class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold">{{ substr($artwork->user->name, 0, 1) }}</div>
+                                    @endif
+                                </div>
+                                <div>
+                                    <h2 class="text-white font-bold text-base leading-tight">{{ $artwork->user->name }}</h2>
+                                    <div class="text-xs text-gray-500 font-medium truncate max-w-[200px]">{{ $artwork->user->bio ?? 'Member' }}</div>
+                                </div>
+                            </a>
+                            @if($user && $user->id !== $artwork->user_id)
+                                <form action="{{ route('user.follow', $artwork->user) }}" method="POST">
+                                    @csrf
+                                    <button class="px-4 py-1.5 rounded-full text-xs font-bold transition {{ $isFollowing ? 'bg-gray-800 text-gray-400 border border-gray-700' : 'bg-indigo-600 text-white' }}">
+                                        {{ $isFollowing ? 'Following' : 'Follow' }}
+                                    </button>
+                                </form>
+                            @endif
+                        </div>
+
+                        {{-- B. Main Buttons --}}
+                        <div class="grid grid-cols-2 gap-3">
+                            @if($user)
+                                <form action="{{ route('artwork.like', $artwork) }}" method="POST">
+                                    @csrf
+                                    <button class="w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 {{ $isLiked ? 'bg-indigo-600 text-white' : 'bg-[#1e1e1e] text-white border border-gray-700' }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 {{ $isLiked ? 'fill-white' : 'fill-none stroke-current' }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+                                        <span class="text-xs">Like</span>
+                                    </button>
+                                </form>
+                                <button onclick="document.getElementById('collectionModal').classList.remove('hidden')" class="w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 {{ $isFavorited ? 'bg-white text-black' : 'bg-[#1e1e1e] text-white border border-gray-700' }}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 {{ $isFavorited ? 'fill-black' : 'fill-none stroke-current' }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                                    <span class="text-xs">{{ $isFavorited ? 'Saved' : 'Save' }}</span>
+                                </button>
+                            @else
+                                <a href="{{ route('login') }}" class="col-span-2 w-full py-3 rounded-lg bg-indigo-600 text-white font-bold text-center">Sign In to Like</a>
+                            @endif
+                        </div>
+
+                        {{-- C. Stats (Jumlah Like & Save) --}}
+                        <div class="flex justify-center gap-8 text-sm text-gray-500 font-medium border-b border-gray-800 pb-4">
+                            <span class="flex items-center gap-2"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/></svg> {{ $artwork->likes->count() }} Likes</span>
+                            <span class="flex items-center gap-2"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg> {{ $artwork->collections->count() }} Saves</span>
+                        </div>
+
+                        {{-- D. Download Button --}}
+                        <a href="{{ asset('storage/' . $artwork->image_path) }}" download class="flex items-center justify-center w-full py-3 rounded-lg border border-gray-600 hover:border-white text-gray-300 hover:text-white font-bold text-sm transition hover:bg-white/5">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                            Download Image
+                        </a>
+
+                        {{-- E. Tools (Report/Edit/Delete) --}}
+                        <div class="flex justify-center pt-2">
+                            @if($user && $user->id !== $artwork->user_id)
+                                <button onclick="document.getElementById('reportModal').classList.remove('hidden')" class="text-red-600 hover:text-red-500 text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>
+                                    Report Artwork
+                                </button>
+                            @endif
+                            @if($user && $user->id === $artwork->user_id)
+                                <div class="grid grid-cols-2 gap-3 w-full">
+                                    <a href="{{ route('artworks.edit', $artwork) }}" class="flex items-center justify-center py-2.5 rounded-lg bg-[#252525] text-gray-300 text-xs font-bold border border-gray-700 hover:text-white">Edit</a>
+                                    <form action="{{ route('artworks.destroy', $artwork) }}" method="POST" onsubmit="return confirm('Delete?')" class="w-full">
+                                        @csrf @method('DELETE')
+                                        <button class="w-full py-2.5 rounded-lg bg-[#252525] text-red-500 text-xs font-bold border border-gray-700 hover:text-red-400">Delete</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+
+                    {{-- 2. JUDUL & DESKRIPSI --}}
+                    <div class="max-w-5xl mx-auto">
+                        <div class="flex items-start justify-between mb-6">
+                            <div>
+                                <h1 class="text-3xl md:text-4xl font-black text-white mb-2 tracking-tight">{{ $artwork->title }}</h1>
+                                <div class="text-sm text-gray-500 flex items-center gap-2">
+                                    <span>Posted {{ $artwork->created_at->diffForHumans() }}</span>
+                                    <span>•</span>
+                                    <span class="text-indigo-400 font-bold">{{ $artwork->category->name }}</span>
+                                </div>
                             </div>
                         </div>
 
-                        {{-- TOMBOL AKSI (Bagian Rawan Error) --}}
-                        <div class="flex flex-wrap items-center gap-3">
-                            @if($user)
-                                {{-- 1. Like --}}
-                                <form action="{{ route('artwork.like', $artwork) }}" method="POST">
-                                    @csrf
-                                    <button class="flex items-center gap-2 px-5 py-2.5 rounded-full font-bold transition {{ $isLiked ? 'bg-pink-100 text-pink-600 border border-pink-200' : 'bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300' }}">
-                                        <span>❤️</span> <span>{{ $artwork->likes->count() }}</span>
-                                    </button>
-                                </form>
-
-                                {{-- 2. Favorite --}}
-                                <form action="{{ route('artwork.favorite', $artwork) }}" method="POST">
-                                    @csrf
-                                    <button class="p-2.5 rounded-full border transition {{ $isFavorited ? 'bg-yellow-50 border-yellow-400 text-yellow-500' : 'border-gray-300 text-gray-400 hover:text-yellow-500' }}">
-                                        <span>⭐</span>
-                                    </button>
-                                </form>
-
-                                {{-- 3. Save to Collection --}}
-                                <button onclick="document.getElementById('collectionModal').classList.remove('hidden')" class="p-2.5 rounded-full border border-gray-300 text-gray-400 hover:bg-indigo-50 hover:text-indigo-600 transition">
-                                    <span>💾</span>
-                                </button>
-
-                                {{-- 4. Edit/Delete (Owner Only) --}}
-                                @if($user->id === $artwork->user_id)
-                                    <div class="h-6 w-px bg-gray-300 mx-2"></div>
-                                    <a href="{{ route('artworks.edit', $artwork) }}" class="text-sm font-bold text-gray-500 hover:text-indigo-600">Edit</a>
-                                    <form action="{{ route('artworks.destroy', $artwork) }}" method="POST" onsubmit="return confirm('Delete?')">
-                                        @csrf @method('DELETE')
-                                        <button class="text-sm font-bold text-red-500 hover:text-red-700 ml-2">Delete</button>
-                                    </form>
-                                @endif
-
-                                {{-- 5. Report (Visitor Only) --}}
-                                @if($user->id !== $artwork->user_id)
-                                    <button onclick="document.getElementById('reportModal').classList.remove('hidden')" class="ml-2 text-sm text-gray-400 hover:text-red-500 underline">Report</button>
-                                @endif
-                            @else
-                                {{-- GUEST VIEW --}}
-                                <div class="px-4 py-2 bg-gray-100 dark:bg-gray-700 rounded-full text-gray-500 text-sm">❤️ {{ $artwork->likes->count() }} Likes</div>
-                                <a href="{{ route('login') }}" class="text-indigo-600 hover:underline text-sm font-semibold">Login to Interact</a>
-                            @endif
-                        </div> 
-                        {{-- END TOMBOL AKSI --}}
-                    </div>
-
-                    {{-- DESCRIPTION --}}
-                    <div class="prose dark:prose-invert max-w-none mb-10 text-gray-700 dark:text-gray-300 leading-relaxed">
-                        <p class="whitespace-pre-line">{{ $artwork->description }}</p>
-                    </div>
-
-                    {{-- TAGS --}}
-                    @if($artwork->tags)
-                        <div class="flex flex-wrap gap-2 mb-10">
-                            @foreach(explode(',', $artwork->tags) as $tag)
-                                <span class="px-3 py-1 bg-indigo-50 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 text-xs rounded-lg">#{{ trim($tag) }}</span>
-                            @endforeach
+                        <div class="prose prose-invert prose-lg max-w-none text-gray-300 leading-relaxed mb-10">
+                            <p class="whitespace-pre-line">{{ $artwork->description }}</p>
                         </div>
-                    @endif
 
-                    <hr class="border-gray-200 dark:border-gray-700 mb-10">
-
-                    {{-- COMMENTS --}}
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-6">Comments ({{ $artwork->comments->count() }})</h3>
-                        
-                        @if($user)
-                            <form action="{{ route('artwork.comment', $artwork) }}" method="POST" class="mb-8 flex gap-4">
-                                @csrf
-                                <div class="w-10 h-10 rounded-full bg-indigo-100 flex-shrink-0 flex items-center justify-center font-bold text-indigo-600">
-                                    {{ substr($user->name, 0, 1) }}
-                                </div>
-                                <div class="flex-1">
-                                    <textarea name="body" rows="2" class="w-full rounded-xl border-gray-300 dark:bg-gray-800 dark:border-gray-600 focus:ring-indigo-500" placeholder="Write a comment..." required></textarea>
-                                    <div class="mt-2 flex justify-end">
-                                        <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-full text-sm font-bold">Post</button>
-                                    </div>
-                                </div>
-                            </form>
-                        @else
-                            <p class="text-gray-500 mb-8">Please <a href="{{ route('login') }}" class="text-indigo-600 underline">login</a> to comment.</p>
-                        @endif
-
-                        <div class="space-y-6">
-                            @foreach($artwork->comments as $comment)
-                                <div class="flex gap-4">
-                                    <div class="w-10 h-10 rounded-full bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-500">
-                                        {{ substr($comment->user->name, 0, 1) }}
+                        {{-- 3. KOMENTAR --}}
+                        <div class="border-t border-gray-800 pt-10">
+                            <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                Comments <span class="bg-[#1e1e1e] text-gray-400 px-2 py-0.5 rounded text-sm">{{ $artwork->comments->count() }}</span>
+                            </h3>
+                            @if($user)
+                                <form action="{{ route('artwork.comment', $artwork) }}" method="POST" class="mb-10 flex gap-4">
+                                    @csrf
+                                    <div class="w-10 h-10 rounded-full bg-indigo-600 flex-shrink-0 flex items-center justify-center font-bold text-white border border-gray-700">
+                                        @if($user->avatar)
+                                            <img src="{{ asset('storage/' . $user->avatar) }}" class="w-full h-full object-cover rounded-full">
+                                        @else
+                                            {{ substr($user->name, 0, 1) }}
+                                        @endif
                                     </div>
                                     <div class="flex-1">
-                                        <div class="flex justify-between">
-                                            <span class="font-bold text-gray-900 dark:text-white">{{ $comment->user->name }}</span>
-                                            <span class="text-xs text-gray-400">{{ $comment->created_at->diffForHumans() }}</span>
+                                        <textarea name="body" rows="2" class="w-full rounded-lg bg-[#1a1a1a] border-gray-700 text-white focus:ring-indigo-500 focus:border-indigo-500 placeholder-gray-600 transition p-4" placeholder="Add a comment..." required></textarea>
+                                        <div class="mt-2 flex justify-end">
+                                            <button type="submit" class="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold text-sm transition shadow-lg shadow-indigo-500/20">Post Comment</button>
                                         </div>
-                                        <p class="text-gray-700 dark:text-gray-300 text-sm mt-1">{{ $comment->body }}</p>
                                     </div>
+                                </form>
+                            @else
+                                <div class="bg-[#1a1a1a] p-6 rounded-lg text-center border border-gray-800 mb-10">
+                                    <p class="text-gray-400">Please <a href="{{ route('login') }}" class="text-indigo-400 hover:underline font-bold">Sign In</a> to join the conversation.</p>
                                 </div>
-                            @endforeach
+                            @endif
+
+                            <div class="space-y-8">
+                                @foreach($artwork->comments as $comment)
+                                    <div class="flex gap-4 group">
+                                        <a href="{{ route('artist.show', $comment->user) }}" class="w-10 h-10 rounded-full bg-gray-800 flex-shrink-0 flex items-center justify-center overflow-hidden border border-gray-700 hover:border-indigo-500 transition">
+                                            @if($comment->user->avatar)
+                                                <img src="{{ asset('storage/' . $comment->user->avatar) }}" class="w-full h-full object-cover">
+                                            @else
+                                                <span class="text-gray-400 font-bold">{{ substr($comment->user->name, 0, 1) }}</span>
+                                            @endif
+                                        </a>
+                                        <div class="flex-1">
+                                            <div class="flex justify-between items-start">
+                                                <div>
+                                                    <a href="{{ route('artist.show', $comment->user) }}" class="font-bold text-gray-200 hover:text-white hover:underline">{{ $comment->user->name }}</a>
+                                                    <span class="text-xs text-gray-600 ml-2">{{ $comment->created_at->diffForHumans() }}</span>
+                                                </div>
+                                                @if($user && ($user->id === $comment->user_id || $user->role === 'admin'))
+                                                <form action="{{ route('comment.destroy', $comment) }}" method="POST">
+                                                    @csrf @method('DELETE')
+                                                    <button class="text-xs text-gray-600 hover:text-red-500 font-bold uppercase tracking-wider opacity-0 group-hover:opacity-100 transition">Delete</button>
+                                                </form>
+                                                @endif
+                                            </div>
+                                            <p class="text-gray-400 mt-1 leading-relaxed">{{ $comment->body }}</p>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
+                </div>
 
-                </div> {{-- End Padding Content --}}
-            </div> {{-- End Card BG --}}
-        </div> {{-- End Max Width --}}
-    </div> {{-- End Py-12 --}}
+                {{-- === KOLOM KANAN: SIDEBAR (DESKTOP ONLY) === --}}
+                <div class="hidden lg:block w-[360px] flex-shrink-0">
+                    <div class="sticky top-24 space-y-6">
+                        
+                        {{-- 1. ARTIST CARD --}}
+                        <div class="dark:bg-[#121212] rounded-xl p-5 border border-gray-800 shadow-xl">
+                            <div class="flex items-center gap-3 mb-5">
+                                <a href="{{ route('artist.show', $artwork->user) }}" class="w-14 h-14 rounded-full overflow-hidden border-2 border-gray-700 hover:border-indigo-500 transition shrink-0">
+                                    @if($artwork->user->avatar)
+                                        <img src="{{ asset('storage/' . $artwork->user->avatar) }}" class="w-full h-full object-cover">
+                                    @else
+                                        <div class="w-full h-full bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">{{ substr($artwork->user->name, 0, 1) }}</div>
+                                    @endif
+                                </a>
+                                <div class="overflow-hidden">
+                                    <a href="{{ route('artist.show', $artwork->user) }}" class="block text-white font-bold text-lg hover:text-indigo-400 transition truncate">
+                                        {{ $artwork->user->name }}
+                                    </a>
+                                    <div class="text-xs text-gray-500 truncate">{{ $artwork->user->bio ?? 'Member of AdoArt' }}</div>
+                                </div>
+                            </div>
 
-    {{-- MODALS (Hanya Dirender Jika User Ada) --}}
+                            @if($user && $user->id !== $artwork->user_id)
+                                <form action="{{ route('user.follow', $artwork->user) }}" method="POST">
+                                    @csrf
+                                    <button class="w-full py-2 rounded-lg font-bold text-sm transition flex items-center justify-center gap-2 {{ $isFollowing ? 'bg-gray-700 text-gray-300 hover:bg-red-900/50 hover:text-red-400' : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/30' }}">
+                                        {{ $isFollowing ? 'Following' : 'Follow' }}
+                                    </button>
+                                </form>
+                            @elseif(!$user)
+                                <a href="{{ route('login') }}" class="block w-full py-2 rounded-lg font-bold text-sm bg-indigo-600 hover:bg-indigo-500 text-white text-center transition">Follow</a>
+                            @endif
+                        </div>
+
+                        {{-- 2. ACTIONS CARD --}}
+                        <div class="dark:bg-[#121212] rounded-xl p-5 border border-gray-800 shadow-xl">
+                            <div class="flex gap-3 mb-6">
+                                @if($user)
+                                    <form action="{{ route('artwork.like', $artwork) }}" method="POST" class="flex-1">
+                                        @csrf
+                                        <button class="w-full py-3 rounded-lg font-bold flex flex-col items-center justify-center transition group shadow-lg {{ $isLiked ? 'bg-indigo-600 text-white shadow-indigo-500/30' : 'bg-gradient-to-br from-indigo-600 to-blue-600 text-white hover:opacity-90' }}">
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 {{ $isLiked ? 'fill-white' : 'fill-none stroke-current' }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+                                            <span class="text-xs">{{ $isLiked ? 'Liked' : 'Like' }}</span>
+                                        </button>
+                                    </form>
+                                    <button onclick="document.getElementById('collectionModal').classList.remove('hidden')" class="flex-1 py-3 rounded-lg font-bold flex flex-col items-center justify-center border transition {{ $isFavorited ? 'bg-white text-black border-white hover:bg-gray-200' : 'bg-[#252525] hover:bg-[#333] text-gray-400 hover:text-white border-gray-700' }}" title="Save">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 {{ $isFavorited ? 'fill-black text-black' : 'fill-none stroke-current' }}" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" /></svg>
+                                        <span class="text-xs">{{ $isFavorited ? 'Saved' : 'Save' }}</span>
+                                    </button>
+                                @else
+                                    <a href="{{ route('login') }}" class="flex-1 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold flex flex-col items-center justify-center transition shadow-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mb-1 fill-none stroke-current" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" /></svg>
+                                        <span class="text-xs">Like</span>
+                                    </a>
+                                @endif
+                            </div>
+                            
+                            <div class="flex justify-center gap-8 text-sm text-gray-500 font-medium mb-6">
+                                <span class="flex items-center gap-2"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M2 10.5a1.5 1.5 0 113 0v6a1.5 1.5 0 01-3 0v-6zM6 10.333v5.43a2 2 0 001.106 1.79l.05.025A4 4 0 008.943 18h5.416a2 2 0 001.962-1.608l1.2-6A2 2 0 0015.56 8H12V4a2 2 0 00-2-2 1 1 0 00-1 1v.667a4 4 0 01-.8 2.4L6.8 7.933a4 4 0 00-.8 2.4z"/></svg> {{ $artwork->likes->count() }} Likes</span>
+                                <span class="flex items-center gap-2"><svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 4a2 2 0 012-2h6a2 2 0 012 2v14l-5-2.5L5 18V4z"/></svg> {{ $artwork->collections->count() }} Saves</span>
+                            </div>
+
+                            <a href="{{ asset('storage/' . $artwork->image_path) }}" download class="block w-full py-2.5 text-center border border-gray-600 hover:border-white text-gray-300 hover:text-white rounded-lg font-bold text-sm transition mb-4 hover:bg-white/5">
+                                <i class="fas fa-download mr-2"></i> Download Image
+                            </a>
+
+                            @if($user && $user->id !== $artwork->user_id)
+                                <button onclick="document.getElementById('reportModal').classList.remove('hidden')" class="block w-full text-center text-xs text-red-600 hover:text-red-500 mt-2 font-medium uppercase tracking-wider">Report Artwork</button>
+                            @endif
+                            @if($user && $user->id === $artwork->user_id)
+                                <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <a href="{{ route('artworks.edit', $artwork) }}" class="block w-full text-center py-2 text-xs font-bold text-gray-300 bg-[#252525] rounded hover:text-white border border-gray-700">Edit</a>
+                                    <form action="{{ route('artworks.destroy', $artwork) }}" method="POST" onsubmit="return confirm('Delete?')">
+                                        @csrf @method('DELETE')
+                                        <button class="block w-full text-center py-2 text-xs font-bold text-red-400 bg-[#252525] rounded hover:text-red-300 border border-gray-700">Delete</button>
+                                    </form>
+                                </div>
+                            @endif
+                        </div>
+
+                        {{-- 3. TAGS CARD --}}
+                        @if($artwork->tags)
+                        <div class="dark:bg-[#121212] rounded-xl p-5 border border-gray-800 shadow-xl">
+                            <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Tags</h4>
+                            <div class="flex flex-wrap gap-2">
+                                @foreach(explode(',', $artwork->tags) as $tag)
+                                    <a href="{{ route('artworks.index', ['search' => trim($tag)]) }}#gallery-section" class="px-3 py-1.5 bg-[#252525] hover:bg-gray-700 text-gray-300 hover:text-white text-xs rounded-md border border-gray-700 transition">
+                                        {{ trim($tag) }}
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                        {{-- 4. MORE BY ARTIST --}}
+                        @if($moreArtworks->count() > 0)
+                        <div class="dark:bg-[#121212] rounded-xl p-5 border border-gray-800 shadow-xl">
+                            <div class="flex justify-between items-center mb-4">
+                                <h4 class="text-xs font-bold text-gray-500 uppercase tracking-wider">More by {{ $artwork->user->name }}</h4>
+                                <a href="{{ route('artist.show', $artwork->user) }}" class="text-xs text-indigo-400 hover:text-white font-bold">View all</a>
+                            </div>
+                            <div class="grid grid-cols-2 gap-2">
+                                @foreach($moreArtworks as $more)
+                                    <a href="{{ route('artworks.show', $more) }}" class="block aspect-square rounded-lg overflow-hidden relative group border border-gray-800 hover:border-gray-600 transition">
+                                        <img src="{{ asset('storage/' . $more->image_path) }}" class="w-full h-full object-cover group-hover:scale-110 transition duration-500">
+                                        <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition"></div>
+                                    </a>
+                                @endforeach
+                            </div>
+                        </div>
+                        @endif
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {{-- MODALS --}}
     @if($user)
-        {{-- Modal Collection --}}
-        <div id="collectionModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl p-6 relative">
-                <button onclick="document.getElementById('collectionModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500">✕</button>
-                <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Save to Moodboard</h3>
-                
+        <div id="collectionModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-[#1e1e1e] w-full max-w-md rounded-xl p-6 relative border border-gray-700 shadow-2xl">
+                <button onclick="document.getElementById('collectionModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+                <h3 class="font-bold text-lg mb-4 text-white">Save to Moodboard</h3>
                 @if($user->collections && $user->collections->count() > 0)
                     <form action="{{ route('collections.add', $artwork) }}" method="POST" class="mb-4">
                         @csrf
                         <div class="flex gap-2">
-                            <select name="collection_id" class="flex-1 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                            <select name="collection_id" class="flex-1 rounded-lg bg-[#121212] border-gray-700 text-white focus:ring-indigo-500">
                                 @foreach($user->collections as $col)
                                     <option value="{{ $col->id }}">{{ $col->name }}</option>
                                 @endforeach
                             </select>
-                            <button class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold">Save</button>
+                            <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg font-bold">Save</button>
                         </div>
                     </form>
-                    <div class="text-center text-xs text-gray-400 mb-4">OR CREATE NEW</div>
+                    <div class="text-center text-xs text-gray-500 mb-4 font-bold uppercase tracking-widest">Or Create New</div>
                 @endif
-
                 <form action="{{ route('collections.store') }}" method="POST">
                     @csrf
                     <input type="hidden" name="artwork_id" value="{{ $artwork->id }}">
-                    <input type="text" name="name" placeholder="New Collection Name" class="w-full mb-2 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white" required>
-                    <button class="w-full py-2 bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-white rounded-lg font-bold">Create & Save</button>
-                </form>
+                    <input type="text" name="name" placeholder="New Collection Name" class="w-full mb-3 rounded-lg bg-[#121212] border-gray-700 text-white focus:ring-indigo-500" required>
+                    <button class="w-full py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-bold border border-gray-600">Create & Save</button>
+                </form> 
             </div>
         </div>
 
-        {{-- Modal Report --}}
-        <div id="reportModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div class="bg-white dark:bg-gray-800 w-full max-w-md rounded-xl p-6 relative">
-                <button onclick="document.getElementById('reportModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-500">✕</button>
-                <h3 class="font-bold text-lg mb-4 text-gray-900 dark:text-white">Report Content</h3>
+        <div id="reportModal" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-[#1e1e1e] w-full max-w-md rounded-xl p-6 relative border border-gray-700 shadow-2xl">
+                <button onclick="document.getElementById('reportModal').classList.add('hidden')" class="absolute top-4 right-4 text-gray-400 hover:text-white">✕</button>
+                <h3 class="font-bold text-lg mb-4 text-white">Report Content</h3>
                 <form action="{{ route('artwork.report', $artwork) }}" method="POST">
                     @csrf
-                    <select name="reason" class="w-full mb-4 rounded-lg border-gray-300 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <option value="Inappropriate">Inappropriate</option>
-                        <option value="Plagiarism">Plagiarism</option>
+                    <select name="reason" class="w-full mb-6 rounded-lg bg-[#121212] border-gray-700 text-white focus:ring-red-500">
+                        <option value="Inappropriate">Inappropriate Content</option>
+                        <option value="Plagiarism">Stolen Art / Plagiarism</option>
                         <option value="Spam">Spam</option>
                     </select>
-                    <button class="w-full py-2 bg-red-600 text-white rounded-lg font-bold">Submit Report</button>
+                    <button class="w-full py-3 bg-red-600 hover:bg-red-500 text-white rounded-lg font-bold">Submit Report</button>
                 </form>
             </div>
         </div>
     @endif
-
 </x-app-layout>

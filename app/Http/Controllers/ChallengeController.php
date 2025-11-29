@@ -153,14 +153,20 @@ class ChallengeController extends Controller
             return back()->with('error', 'Cannot select winners before challenge ends.');
         }
 
+        // VALIDASI BARU: Pastikan winner_1, winner_2, winner_3 berbeda satu sama lain
         $request->validate([
             'winner_1' => 'nullable|exists:challenge_submissions,id',
-            'winner_2' => 'nullable|exists:challenge_submissions,id',
-            'winner_3' => 'nullable|exists:challenge_submissions,id',
+            'winner_2' => 'nullable|exists:challenge_submissions,id|different:winner_1',
+            'winner_3' => 'nullable|exists:challenge_submissions,id|different:winner_1|different:winner_2',
+        ], [
+            'winner_2.different' => 'The 2nd place winner cannot be the same as 1st place.',
+            'winner_3.different' => 'The 3rd place winner must be unique.',
         ]);
 
+        // Reset semua ranking dulu
         ChallengeSubmission::where('challenge_id', $challenge->id)->update(['rank' => null]);
 
+        // Update ranking baru
         if ($request->winner_1) ChallengeSubmission::where('id', $request->winner_1)->update(['rank' => '1']);
         if ($request->winner_2) ChallengeSubmission::where('id', $request->winner_2)->update(['rank' => '2']);
         if ($request->winner_3) ChallengeSubmission::where('id', $request->winner_3)->update(['rank' => '3']);
@@ -168,7 +174,7 @@ class ChallengeController extends Controller
         $challenge->update(['status' => 'closed']);
 
         return back()->with('success', 'Winners announced successfully!');
-    }
+      }
 
     public function mySubmissions()
     {
