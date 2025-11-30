@@ -19,9 +19,8 @@
                             Challenge Closed
                         </span>
                     @endif
-                    <span class="px-4 py-1.5 bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 text-xs font-bold tracking-widest uppercase rounded-full flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" /></svg>
-                        Prize Pool: {{ $challenge->prize }}
+                    <span class="px-4 py-1 bg-yellow-500/20 text-yellow-400 border border-yellow-500/50 text-sm font-black tracking-wide rounded-full flex items-center gap-1 shadow-lg shadow-yellow-500/10 font-mono">
+                        <span class="opacity-70 text-xs">$</span>{{ $challenge->prize }}
                     </span>
                 </div>
 

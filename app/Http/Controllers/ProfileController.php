@@ -33,6 +33,9 @@ class ProfileController extends Controller
         }
 
         if ($request->hasFile('avatar')) {
+            if ($request->user()->avatar) {
+                \Illuminate\Support\Facades\Storage::disk('public')->delete($request->user()->avatar);
+            }
             $path = $request->file('avatar')->store('avatars', 'public');
             $request->user()->avatar = $path;
         }
@@ -41,9 +44,18 @@ class ProfileController extends Controller
             $request->user()->bio = $request->input('bio');
         }
 
+        $socialLinks = [
+            'website' => $request->input('website'),
+            'instagram' => $request->input('instagram'),
+            'twitter' => $request->input('twitter'),
+        ];
+        
+        $request->user()->social_links = $socialLinks;
+
         $request->user()->save();
 
-        return Redirect::route('profile.edit')->with('status', 'profile-updated');
+        return redirect()->route('artist.show', $request->user())
+                         ->with('success', 'Profile updated successfully!');
     }
 
     /**

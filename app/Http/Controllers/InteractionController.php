@@ -54,8 +54,21 @@ class InteractionController extends Controller
     }
     public function report(Request $request, Artwork $artwork)
     {
-        $request->validate(['reason' => 'required|string|max:255']);
+        // Validasi: Pastikan alasan ada di dalam daftar yang diizinkan
+        $request->validate([
+            'reason' => 'required|string|in:Inappropriate Content,Plagiarism,Spam,Hate Speech,Scam or Fraud',
+        ]);
 
+        // 1. CEK DUPLIKASI (Satu user max 1 report per karya)
+        $existingReport = \App\Models\Report::where('reporter_id', Auth::id())
+            ->where('artwork_id', $artwork->id)
+            ->exists();
+
+        if ($existingReport) {
+            return back()->with('error', 'You have already reported this artwork.');
+        }
+
+        // 2. SIMPAN LAPORAN
         \App\Models\Report::create([
             'reporter_id' => Auth::id(),
             'artwork_id' => $artwork->id,
@@ -64,13 +77,5 @@ class InteractionController extends Controller
         ]);
 
         return back()->with('success', 'Report submitted to moderators.');
-    }
-    public function toggleFavorite(Artwork $artwork)
-    {
-        $artwork->favorites()->where('user_id', Auth::id())->exists()
-            ? $artwork->favorites()->where('user_id', Auth::id())->delete()
-            : $artwork->favorites()->create(['user_id' => Auth::id()]);
-
-        return back();
     }
 }

@@ -141,4 +141,13 @@ class ArtworkController extends Controller
         $favorites = Auth::user()->favorites()->with('artwork.user')->latest()->paginate(12);
         return view('artworks.favorites', compact('favorites'));
     }
+    public function edit(Artwork $artwork)
+    {
+        if (Auth::id() !== $artwork->user_id) {
+            abort(403);
+        }
+
+        $categories = \App\Models\Category::all();
+        return view('artworks.edit', compact('artwork', 'categories'));
+    }
 }

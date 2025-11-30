@@ -1,6 +1,7 @@
 <x-app-layout>
     {{-- CONTAINER UTAMA (Alpine JS untuk Tab System) --}}
-    <div class="min-h-screen bg-[#0b0b0b] text-gray-300" x-data="{ activeTab: 'portfolio' }">
+    <div class="min-h-screen bg-[#0b0b0b] text-gray-300" 
+     x-data="{ activeTab: new URLSearchParams(window.location.search).get('tab') || 'portfolio' }">
         
         {{-- 1. HEADER PROFILE & STATS --}}
         <div class="bg-[#121212] border-b border-gray-800 pt-8 md:pt-10 pb-0">
@@ -25,7 +26,13 @@
 
                     {{-- Info User --}}
                     <div class="flex-1 w-full">
-                        <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2">{{ Auth::user()->name }}</h1>
+                        <a href="{{ route('artist.show', Auth::user()) }}" class="group/name inline-block">
+                            <h1 class="text-2xl md:text-4xl font-black text-white tracking-tight mb-2 group-hover/name:text-indigo-400 transition flex items-center gap-2">
+                                {{ Auth::user()->name }}
+                                {{-- Ikon Link Kecil (Opsional, biar user tau ini bisa diklik) --}}
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 opacity-0 group-hover/name:opacity-100 transition transform translate-y-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                            </h1>
+                        </a>
                         <p class="text-gray-400 max-w-2xl text-sm leading-relaxed mx-auto md:mx-0">{{ Auth::user()->bio ?? 'No bio yet. Tell the world who you are!' }}</p>
                         
                         {{-- Stats --}}
@@ -303,6 +310,32 @@
                                                   class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-3 transition hover:border-gray-600 leading-relaxed"
                                                   placeholder="Tell us about your art style...">{{ old('bio', Auth::user()->bio) }}</textarea>
                                         <p class="text-xs text-gray-600 text-right">Brief description for your profile.</p>
+                                    </div>
+
+                                    {{-- Social Links Section --}}
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-gray-800">
+                                        <div class="md:col-span-3 text-sm font-bold text-gray-400 uppercase tracking-wider mb-2">External Links</div>
+                                        
+                                        {{-- Website --}}
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-500 mb-1">Website URL</label>
+                                            <input type="url" name="website" value="{{ Auth::user()->social_links['website'] ?? '' }}" placeholder="https://yourportfolio.com"
+                                                  class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2">
+                                        </div>
+
+                                        {{-- Instagram --}}
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-500 mb-1">Instagram URL</label>
+                                            <input type="url" name="instagram" value="{{ Auth::user()->social_links['instagram'] ?? '' }}" placeholder="https://instagram.com/username"
+                                                  class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2">
+                                        </div>
+
+                                        {{-- Twitter --}}
+                                        <div>
+                                            <label class="block text-xs font-bold text-gray-500 mb-1">Twitter / X URL</label>
+                                            <input type="url" name="twitter" value="{{ Auth::user()->social_links['twitter'] ?? '' }}" placeholder="https://twitter.com/username"
+                                                  class="w-full bg-[#121212] border border-gray-700 text-white text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 px-4 py-2">
+                                        </div>
                                     </div>
 
                                     {{-- Save Button & Status --}}
