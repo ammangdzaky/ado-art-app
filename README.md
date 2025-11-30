@@ -1,10 +1,9 @@
 # 🌹 AdoArt - Digital Art Showcase & Challenge Platform
 
 ![AdoArt Banner](public/images/ado-logo.png)
-*(Ganti gambar ini dengan screenshot aplikasi Anda setelah deployment)*
 
 ## 📖 Tentang Aplikasi
-**AdoArt** adalah platform komunitas seni digital modern yang mempertemukan **Kreator (Member)** dan **Penyelenggara Acara (Curator)**. Aplikasi ini dibangun menggunakan **Laravel 11** dengan gaya desain *Dark Mode Cinematic* yang terinspirasi dari estetika visual penyanyi Ado (Dominasi warna Hitam & Indigo) serta struktur profesional ala ArtStation.
+**AdoArt** adalah platform komunitas seni digital modern yang mempertemukan **Kreator (Member)** dan **Penyelenggara Acara (Curator)**. Aplikasi ini dibangun menggunakan **Laravel 11** dengan gaya desain *Dark Mode Cinematic*.
 
 Aplikasi ini memfasilitasi pameran karya (Showcase), interaksi sosial, dan sistem kompetisi (Challenge) yang komprehensif mulai dari pendaftaran hingga pemilihan pemenang secara visual.
 
@@ -42,7 +41,6 @@ Aplikasi ini memfasilitasi pameran karya (Showcase), interaksi sosial, dan siste
 
 * **Backend Framework:** Laravel 11 (PHP 8.2+)
 * **Frontend Styling:** Tailwind CSS (Utility-first CSS framework)
-* **Interactivity:** Alpine.js (Lightweight JavaScript framework untuk Modal, Dropdown, Tab System, dan AJAX Like/Save)
 * **Database:** MySQL
 * **Authentication:** Laravel Breeze (Blade Stack)
 * **Icons:** Heroicons & SVG Custom
