@@ -69,6 +69,7 @@ Duplikat file .env.example menjadi .env dan atur database.
 ```bash
 cp .env.example .env
 ```
+Buka phpMyAdmin dan buat database baru dengan nama db_adoart.
 Buka file .env dan sesuaikan konfigurasi database Anda:
 ```bash
 DB_CONNECTION=mysql
