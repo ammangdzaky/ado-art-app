@@ -49,7 +49,7 @@ class ChallengeController extends Controller
             'status' => 'open',
         ]);
 
-        return redirect()->route('curator.challenges.index')->with('success', 'Challenge created successfully.');
+        return redirect()->route('curator.dashboard')->with('success', 'Challenge created successfully.');
     }
 
     public function show(Challenge $challenge)
@@ -98,7 +98,7 @@ class ChallengeController extends Controller
 
         $challenge->update($request->except('banner'));
 
-        return redirect()->route('curator.challenges.index')->with('success', 'Challenge updated.');
+        return redirect()->route('curator.dashboard')->with('success', 'Challenge updated.');
     }
 
     public function destroy(Challenge $challenge)
@@ -110,7 +110,7 @@ class ChallengeController extends Controller
         Storage::disk('public')->delete($challenge->banner_path);
         $challenge->delete();
         
-        return redirect()->route('curator.challenges.index')->with('success', 'Challenge deleted.');
+        return redirect()->route('curator.dashboard')->with('success', 'Challenge deleted.');
     }
 
     public function submit(Request $request, Challenge $challenge)

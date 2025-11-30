@@ -13,30 +13,30 @@ class ArtworkController extends Controller
 {
     public function index(Request $request)
     {
+        // --- 1. QUERY ARTWORKS (KARYA) ---
         $query = \App\Models\Artwork::with('user', 'category');
 
-        // 1. Filter Kategori
+        // Filter Kategori
         if ($request->has('category') && $request->category != 'all') {
             $query->whereHas('category', function ($q) use ($request) {
                 $q->where('slug', $request->category);
             });
         }
 
-        // 2. Search Logic (PERBAIKAN: Grouping Query)
+        // Search Logic (Artwork)
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('title', 'like', '%' . $search . '%')
                   ->orWhere('description', 'like', '%' . $search . '%')
                   ->orWhere('tags', 'like', '%' . $search . '%')
-                  // Cari berdasarkan Nama User (Relasi)
                   ->orWhereHas('user', function($u) use ($search) {
                       $u->where('name', 'like', '%' . $search . '%');
                   });
             });
         }
 
-        // 3. Sorting
+        // Sorting Artwork
         if ($request->sort === 'trending') {
             $query->withCount('likes')->orderByDesc('likes_count');
         } else {
@@ -45,15 +45,29 @@ class ArtworkController extends Controller
 
         $artworks = $query->paginate(12);
         
-        $activeChallenges = \App\Models\Challenge::where('status', 'open')
-            ->where('end_date', '>', now())
-            ->latest()
-            ->take(5)
-            ->get();
+
+        // --- 2. QUERY CHALLENGES (LOMBA) ---
+        $activeChallenges = collect(); // Default kosong
+        $foundChallenges = collect();  // Default kosong
+
+        if ($request->filled('search')) {
+            // JIKA SEDANG MENCARI: Cari Challenge yang cocok judul/deskripsinya
+            $foundChallenges = \App\Models\Challenge::where('title', 'like', '%' . $request->search . '%')
+                ->orWhere('description', 'like', '%' . $request->search . '%')
+                ->latest()
+                ->get();
+        } else {
+            // JIKA TIDAK MENCARI: Tampilkan Banner Marquee (Hanya yang Aktif)
+            $activeChallenges = \App\Models\Challenge::where('status', 'open')
+                ->where('end_date', '>', now())
+                ->latest()
+                ->take(5)
+                ->get();
+        }
 
         $categories = \App\Models\Category::all();
 
-        return view('artworks.index', compact('artworks', 'activeChallenges', 'categories'));
+        return view('artworks.index', compact('artworks', 'activeChallenges', 'foundChallenges', 'categories'));
     }
 
     public function create()

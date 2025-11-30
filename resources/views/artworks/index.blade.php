@@ -1,30 +1,69 @@
 <x-app-layout>
     
     {{-- 1. CHALLENGES BILLBOARD (MARQUEE) --}}
-    @if($activeChallenges->count() > 0)
-    <div class="bg-black border-b border-gray-800 overflow-hidden marquee-container relative group">
-        <div class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-gray-900 to-transparent z-10 pointer-events-none"></div>
-        <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-gray-900 to-transparent z-10 pointer-events-none"></div>
+    {{-- KONDISI 1: SEDANG MENCARI (SEARCH MODE) --}}
+    @if(request('search') && $foundChallenges->count() > 0)
+        <div class="bg-[#0b0b0b] border-b border-gray-800 pt-8 pb-4">
+            <div class="max-w-[1920px] mx-auto px-4 sm:px-6 lg:px-8">
+                <h2 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                    Found {{ $foundChallenges->count() }} Challenges matching "{{ request('search') }}"
+                </h2>
 
-        <div class="py-6 flex animate-marquee">
-            @for ($i = 0; $i < 2; $i++) 
-                @foreach($activeChallenges as $challenge)
-                <a href="{{ route('challenges.show', $challenge) }}" class="relative block w-[400px] h-[220px] mx-3 rounded-xl overflow-hidden shadow-lg transform transition hover:scale-105 hover:shadow-indigo-500/50 flex-shrink-0 border border-gray-800">
-                    <img src="{{ asset('storage/' . $challenge->banner_path) }}" class="w-full h-full object-cover opacity-80 hover:opacity-100 transition duration-500">
-                    <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
-                    <div class="absolute bottom-0 left-0 p-5 w-full">
-                        <span class="px-2 py-1 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-sm mb-2 inline-block">CHALLENGE</span>
-                        <h3 class="text-xl font-black text-white leading-tight mb-1 drop-shadow-md">{{ $challenge->title }}</h3>
-                        <div class="mt-3 flex items-center justify-between">
-                            <span class="text-yellow-400 text-xs font-bold"></span>
-                            <span class="text-gray-400 text-xs">Ends {{ $challenge->end_date->diffForHumans() }}</span>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    @foreach($foundChallenges as $challenge)
+                    <a href="{{ route('challenges.show', $challenge) }}" class="group relative block h-48 rounded-xl overflow-hidden border border-gray-800 hover:border-indigo-500 transition">
+                        {{-- Gambar --}}
+                        <img src="{{ asset('storage/' . $challenge->banner_path) }}" class="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+                        
+                        {{-- Info --}}
+                        <div class="absolute bottom-0 left-0 p-5 w-full">
+                            <div class="flex justify-between items-end">
+                                <div>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest mb-1 block {{ $challenge->status == 'open' ? 'text-green-400' : 'text-red-400' }}">
+                                        {{ $challenge->status }}
+                                    </span>
+                                    <h3 class="text-xl font-black text-white leading-tight">{{ $challenge->title }}</h3>
+                                </div>
+                                <div class="text-right">
+                                    <span class="block text-xs text-gray-400 uppercase">Prize</span>
+                                    <span class="font-mono text-yellow-400 font-bold">${{ $challenge->prize }}</span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </a>
-                @endforeach
-            @endfor
+                    </a>
+                    @endforeach
+                </div>
+            </div>
         </div>
-    </div>
+    
+    {{-- KONDISI 2: TIDAK MENCARI (NORMAL MARQUEE MODE) --}}
+    @elseif(!request('search') && $activeChallenges->count() > 0)
+        <div class="bg-black border-b border-gray-800 overflow-hidden marquee-container relative group">
+            <div class="absolute left-0 top-0 bottom-0 w-32 bg-gradient-to-r from-gray-900 to-transparent z-10 pointer-events-none"></div>
+            <div class="absolute right-0 top-0 bottom-0 w-32 bg-gradient-to-l from-gray-900 to-transparent z-10 pointer-events-none"></div>
+
+            <div class="py-6 flex animate-marquee">
+                @for ($i = 0; $i < 2; $i++) 
+                    @foreach($activeChallenges as $challenge)
+                    <a href="{{ route('challenges.show', $challenge) }}" class="relative block w-[400px] h-[220px] mx-3 rounded-xl overflow-hidden shadow-lg transform transition hover:scale-105 hover:shadow-indigo-500/50 flex-shrink-0 border border-gray-800">
+                        <img src="{{ asset('storage/' . $challenge->banner_path) }}" class="w-full h-full object-cover opacity-80 hover:opacity-100 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
+                        <div class="absolute bottom-0 left-0 p-5 w-full">
+                            <span class="px-2 py-1 bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-sm mb-2 inline-block">CHALLENGE</span>
+                            <h3 class="text-xl font-black text-white leading-tight mb-1 drop-shadow-md">{{ $challenge->title }}</h3>
+                            <div class="mt-3 flex items-center justify-start">
+                                <span class="text-gray-300 text-xs bg-white/10 backdrop-blur-md px-2 py-1 rounded border border-white/10 flex items-center gap-1">
+                                    Ends {{ $challenge->end_date->diffForHumans() }}
+                                </span>
+                            </div>
+                        </div>
+                    </a>
+                    @endforeach
+                @endfor
+            </div>
+        </div>
     @endif
 
     {{-- BAGIAN 2: CATEGORIES BAR (REVISI WARNA DARK MODE) --}}
